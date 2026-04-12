@@ -245,7 +245,10 @@ async def auto_rename_files(client, message):
         await msg.edit("**Uploading...**")
         try:
             upload_params = {
-                'chat_id': message.chat.id,
+                chat = await client.get_chat(Config.DUMP_CHANNEL)
+
+upload_params = {
+    'chat_id': chat.id,,
                 'caption': caption,
                 'thumb': thumb_path,
                 'progress': progress_for_pyrogram,
