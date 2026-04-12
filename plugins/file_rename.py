@@ -248,12 +248,28 @@ async def auto_rename_files(client, message):
                 chat = await client.get_chat(Config.DUMP_CHANNEL)
 
 upload_params = {
-    'chat_id': chat.id,,
-                'caption': caption,
-                'thumb': thumb_path,
-                'progress': progress_for_pyrogram,
-                'progress_args': ("Uploading...", msg, time.time())
-            }
+    'chat_id': chat.id,
+    'caption': caption,
+    'thumb': thumb_path,
+    'progress': progress_for_pyrogram,
+    'progress_args': ("Uploading...", msg, time.time())
+}
+
+if media_type == "document":
+    await client.send_document(
+        document=file_path,
+        **upload_params
+    )
+elif media_type == "video":
+    await client.send_video(
+        video=file_path,
+        **upload_params
+    )
+elif media_type == "audio":
+    await client.send_audio(
+        audio=file_path,
+        **upload_params
+    )
 
             if media_type == "document":
                 await client.send_document(document=file_path, **upload_params)
