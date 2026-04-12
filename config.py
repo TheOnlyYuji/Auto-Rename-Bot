@@ -20,7 +20,7 @@ class Config(object):
     ADMIN       = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get('ADMIN', '7957802698').split()]
     FORCE_SUB_CHANNELS = os.environ.get('FORCE_SUB_CHANNELS', 'anime_xtr_ongoing').split(',')
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003732729909"))
-    DUMP_CHANNEL = int(os.environ.get("DUMP_CHANNEL", "-1003964103779"))
+    DUMP_CHANNEL = int(os.environ.get("DUMP_CHANNEL", "-1003456235058"))
     
     # wes response configuration     
     WEBHOOK = bool(os.environ.get("WEBHOOK", "True"))
