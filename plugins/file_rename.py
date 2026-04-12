@@ -7,26 +7,26 @@ import logging
 from datetime import datetime
 from PIL import Image
 from pyrogram import Client, filters
-from pyrogram.errors import FloodWait
-from pyrogram.types import Message
 from plugins.antinsfw import check_anti_nsfw
 from helper.utils import progress_for_pyrogram
 from helper.database import codeflixbots
 
-# Configure logging
+# ================= LOGGER =================
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
+# ================= GLOBALS =================
 renaming_operations = {}
 
+# ================= PATTERNS =================
 SEASON_EPISODE_PATTERNS = [
     (re.compile(r'S(\d+)(?:E|EP)(\d+)'), ('season', 'episode')),
     (re.compile(r'S(\d+)[\s-]*(?:E|EP)(\d+)'), ('season', 'episode')),
     (re.compile(r'Season\s*(\d+)\s*Episode\s*(\d+)', re.IGNORECASE), ('season', 'episode')),
-    (re.compile(r'S(\d+)E(\d+)'), ('season', 'episode')),
+    (re.compile(r'\[S(\d+)\]\[E(\d+)\]'), ('season', 'episode')),
     (re.compile(r'S(\d+)[^\d]*(\d+)'), ('season', 'episode')),
     (re.compile(r'(?:E|EP|Episode)\s*(\d+)', re.IGNORECASE), (None, 'episode')),
     (re.compile(r'\b(\d+)\b'), (None, 'episode'))
@@ -39,6 +39,7 @@ QUALITY_PATTERNS = [
     (re.compile(r'\b(HDRip|HDTV)\b', re.IGNORECASE), lambda m: m.group(1)),
 ]
 
+# ================= HELPERS =================
 def extract_season_episode(filename):
     for pattern, (s, e) in SEASON_EPISODE_PATTERNS:
         match = pattern.search(filename)
@@ -48,12 +49,14 @@ def extract_season_episode(filename):
             return season, episode
     return None, None
 
+
 def extract_quality(filename):
     for pattern, extractor in QUALITY_PATTERNS:
         match = pattern.search(filename)
         if match:
             return extractor(match)
     return "Unknown"
+
 
 async def cleanup_files(*paths):
     for path in paths:
@@ -63,9 +66,11 @@ async def cleanup_files(*paths):
         except:
             pass
 
+
 async def process_thumbnail(thumb_path):
     if not thumb_path or not os.path.exists(thumb_path):
         return None
+
     try:
         with Image.open(thumb_path) as img:
             img = img.convert("RGB").resize((320, 320))
@@ -76,6 +81,7 @@ async def process_thumbnail(thumb_path):
         return None
 
 
+# ================= MAIN HANDLER =================
 @Client.on_message(filters.private & (filters.document | filters.video | filters.audio))
 async def auto_rename_files(client, message):
 
@@ -113,9 +119,10 @@ async def auto_rename_files(client, message):
     if file_id in renaming_operations:
         if (datetime.now() - renaming_operations[file_id]).seconds < 10:
             return
+
     renaming_operations[file_id] = datetime.now()
 
-    # SAFE INIT (IMPORTANT FIX)
+    # SAFE INIT
     download_path = None
     metadata_path = None
     thumb_path = None
@@ -148,7 +155,7 @@ async def auto_rename_files(client, message):
 
         await msg.edit("Processing...")
 
-        file_path = metadata_path
+        file_path = metadata_path  # placeholder safe pass
 
         await msg.edit("Preparing upload...")
 
@@ -172,8 +179,10 @@ async def auto_rename_files(client, message):
 
         if media_type == "document":
             await client.send_document(document=file_path, **upload_params)
+
         elif media_type == "video":
             await client.send_video(video=file_path, **upload_params)
+
         elif media_type == "audio":
             await client.send_audio(audio=file_path, **upload_params)
 
@@ -181,4 +190,8 @@ async def auto_rename_files(client, message):
 
     except Exception as e:
         logger.error(e)
-        await message.reply_text(f"Error: {e
+        await message.reply_text(f"Error: {e}")
+
+    finally:
+        await cleanup_files(download_path, metadata_path, thumb_path)
+        renaming_operations.pop(file_id, None)
